@@ -9,10 +9,54 @@ if (!defined('ABSPATH')) exit; // Exit if accessed directly
  * Text Domain: woocommerce_product_aggregator
  */ 
 
+ // Add a menu page to the left sidebar
+function wpa_menu() {
+    add_menu_page(
+        'WPA',
+        'WPA',
+        'manage_options',
+        'wpa-plugin',
+        'wpa_plugin_page',
+        'dashicons-text',
+        30
+    );
+}
+add_action( 'admin_menu', 'wpa_menu' );
+
+// Render the plugin settings page
+function wpa_plugin_page() {
+    if ( ! current_user_can( 'manage_options' ) ) {
+        return;
+    }
+    
+    if ( isset( $_POST['wpa_storage_submit'] ) ) {
+        // Save the submitted text as an option
+        $text_content = $_POST['wpa_content'];
+        if ( ! empty( $text_content ) ) {
+            update_option( 'wpa_text', $text_content );
+        }
+    }
+    
+    // Retrieve the stored text option
+    $wpa_text = get_option( 'wpa_text' );
+    ?>
+    <div class="wrap">
+        <h1>WPA HTML Block</h1>
+        <form method="post" action="">
+            <?php
+            // Display the WordPress editor
+            wp_editor( wp_unslash( $wpa_text ), 'wpa_content', array( 'textarea_rows' => 5 ) );
+            ?>
+            <p><input type="submit" name="wpa_storage_submit" class="button-primary" value="Save Text"></p>
+        </form>
+    </div>
+    <?php
+}
+
  /* JS and CSS files */
 function add_js_css_func(){
     wp_enqueue_script( 'wpa-js', plugin_dir_url( __FILE__ ) . 'js/wpa.js', array(), '1.0', true );
-    wp_enqueue_style( 'wpa-css', plugin_dir_url( __FILE__ ) . 'css/wpa.css', array(), '1.0', 'all' );
+    wp_enqueue_style( 'wpa-css', plugin_dir_url( __FILE__ ) . 'css/wpa.css', array(), '1.0.0', 'all' );
 }
 
  add_action('wp_enqueue_scripts','add_js_css_func');
@@ -46,9 +90,8 @@ $vari_data = "";
  }
 
 /* Generate Bottom Content */
-if ($product->get_short_description()) {
-    // Get the product description
-    $bottom_content_part = '<div class="wpa-bottom-content">'.$product->get_short_description().'</div>';
+if (get_option( 'wpa_text' )) {
+    $bottom_content_part = '<div class="wpa-bottom-content">'.wp_unslash(get_option( 'wpa_text' )).'</div>';
 }else{
    $bottom_content_part = '';
 }
