@@ -32,13 +32,18 @@ function wpa_plugin_page() {
     if ( isset( $_POST['wpa_storage_submit'] ) ) {
         // Save the submitted text as an option
         $text_content = $_POST['wpa_content'];
+        $colorpicker = $_POST['colorpicker'];
         if ( ! empty( $text_content ) ) {
             update_option( 'wpa_text', $text_content );
+        }
+        if ( ! empty( $colorpicker ) ) {
+            update_option( 'wpa_colorpicker', $colorpicker );
         }
     }
     
     // Retrieve the stored text option
     $wpa_text = get_option( 'wpa_text' );
+    $wpa_colorpicker = get_option( 'wpa_colorpicker' );
     ?>
     <div class="wrap">
         <h1>WPA HTML Block</h1>
@@ -47,7 +52,8 @@ function wpa_plugin_page() {
             // Display the WordPress editor
             wp_editor( wp_unslash( $wpa_text ), 'wpa_content', array( 'textarea_rows' => 5 ) );
             ?>
-            <p><input type="submit" name="wpa_storage_submit" class="button-primary" value="Save Text"></p>
+            <br><label>Pick Theme Color: </label><input id="colorPickerInput" type="text" value="<?php echo esc_attr(wp_unslash($wpa_colorpicker)); ?>" name="colorpicker" >
+            <p><input type="submit" name="wpa_storage_submit" class="button-primary" value="Save"></p>
         </form>
     </div>
     <?php
@@ -57,9 +63,60 @@ function wpa_plugin_page() {
 function add_js_css_func(){
     wp_enqueue_script( 'wpa-js', plugin_dir_url( __FILE__ ) . 'js/wpa.js', array(), '1.0', true );
     wp_enqueue_style( 'wpa-css', plugin_dir_url( __FILE__ ) . 'css/wpa.css', array(), '1.0.0', 'all' );
-}
 
- add_action('wp_enqueue_scripts','add_js_css_func');
+    // Dynamic CSS
+    if (get_option( 'wpa_colorpicker' )) {
+        $custom_css = "
+        .h-tab_tab-head li.active{
+            background-color: ".wp_unslash(get_option( 'wpa_colorpicker' )).";
+        }
+        .add-to-cart-btn{
+            background: ".wp_unslash(get_option( 'wpa_colorpicker' )).";
+        }
+        .add-to-cart-btn:hover, .add-to-cart-btn:visited, .add-to-cart-btn:active, .add-to-cart-btn:focus{
+            background: ".wp_unslash(get_option( 'wpa_colorpicker' )).";
+        }
+        .v-tab_tab-head li.active::before {
+            background: ".wp_unslash(get_option( 'wpa_colorpicker' )).";
+        }
+        .h-tab_container .read-more{
+            color: ".wp_unslash(get_option( 'wpa_colorpicker' )).";
+        }
+        ";
+    }else{
+        $custom_css = "
+        .h-tab_tab-head li.active{
+            background-color: #109b47;
+        }
+        .add-to-cart-btn{
+            background: #109b47;
+        }
+        .add-to-cart-btn:hover, .add-to-cart-btn:visited, .add-to-cart-btn:active, .add-to-cart-btn:focus{
+            background: #109b47;
+        }
+        .v-tab_tab-head li.active::before {
+            background: #109b47;
+        }
+        .h-tab_container .read-more{
+            color: #109b47;
+        }
+        ";
+    }
+    
+    wp_add_inline_style( 'wpa-css', $custom_css );
+}
+add_action('wp_enqueue_scripts','add_js_css_func');
+
+ /* JS for admin */
+function add_js_admin_func(){
+    // Enqueue the color picker scripts and styles
+    wp_enqueue_style( 'wp-color-picker' );
+    wp_enqueue_script( 'wp-color-picker' );
+    // Custom admin script
+    wp_enqueue_script( 'wpa-color-picker-script', plugin_dir_url( __FILE__ ) . 'admin/js/script.js', array(), '1.0', true );
+    
+}
+add_action('admin_enqueue_scripts','add_js_admin_func');
 
 
  /* Generate Product Title By ID */
@@ -68,6 +125,28 @@ function add_js_css_func(){
     return $product->get_title();
  }
 
+ /* Subtract by words */
+ function wordSubstr($str, $start, $length = null) {
+    $words = explode(' ', $str);
+    $wordCount = count($words);
+
+    if ($length !== null && $length < 0) {
+        $length = 0;
+    }
+
+    if ($start < 0) {
+        $start = max(0, $wordCount + $start);
+    }
+
+    if ($length === null) {
+        $length = $wordCount - $start;
+    }
+
+    $end = min($start + $length, $wordCount);
+    $result = implode(' ', array_slice($words, $start, $end - $start));
+
+    return $result;
+}
 
  /* Generate Product Content By ID */
  function get_prod_cont($prod_id){
@@ -84,7 +163,13 @@ $vari_data = "";
 // Check if the product exists and is of type 'product'
  if (get_post_field('post_content', $product_id)) {
      // Get the product description
-     $top_content_part = '<div class="wpa-top-content">'.get_post_field('post_content', $product_id).'</div>';
+     $top_excerpt = wordSubstr(get_post_field('post_content', $product_id), 0, 30);
+     
+     if (strlen(get_post_field('post_content', $product_id)) > strlen($top_excerpt)) {
+        $rest_of_content = '<span class="more-text">'.str_replace($top_excerpt, '', get_post_field('post_content', $product_id)).'</span> <a href="#" class="read-more">Read More</a>';
+     }
+     
+     $top_content_part = '<div class="wpa-top-content">'.$top_excerpt.$rest_of_content.'</div>';
  }else{
     $top_content_part = '';
  }
@@ -123,11 +208,11 @@ if ($product->is_type('variable')) {
                 $l++;
             }
             
-            $vari_data = $vari_data.$vari_data_option.'</select> <a class="add-to-cart-btn" href="'.site_url().'/checkout/?add-to-cart='.$product_id.'&variation_id='.$variations[0].'">Add to Cart</a>';
+            $vari_data = $vari_data.$vari_data_option.'</select> <a class="add-to-cart-btn" href="'.site_url().'/cart/?add-to-cart='.$product_id.'&variation_id='.$variations[0].'">Add to Cart</a>';
         }
     }else{
         /* For Non Variable Products */
-        $vari_data = '<a class="add-to-cart-btn" href="'.site_url().'/checkout/?add-to-cart='.$product_id.'">Add to Cart</a>';
+        $vari_data = '<a class="add-to-cart-btn" href="'.site_url().'/cart/?add-to-cart='.$product_id.'">Add to Cart</a>';
     }
     return $top_content_part.$vari_data.$bottom_content_part;
  }
@@ -238,6 +323,7 @@ if ($product->is_type('variable')) {
                 '.$v_tab_body.'
                 </div>
             </div>';
+
     return $data;
  }
  add_shortcode('wpa_main','wpa_main_func');

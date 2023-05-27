@@ -54,4 +54,15 @@ jQuery(document).ready(function($) {
 
         $(".add-to-cart-btn").attr("href",modifiedUrlString);
     });
+
+    /* Read more text toggle */
+    $('.h-tab_container .read-more').click(function(event) {
+        event.preventDefault();
+        $(this).toggleClass('show-content');
+        var content = $(this).siblings('.more-text');
+        content.slideToggle();
+        $(this).text(function(i, text) {
+          return text === 'Read More' ? 'Read Less' : 'Read More';
+        });
+      });
 });

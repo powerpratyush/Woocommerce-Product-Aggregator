@@ -16,7 +16,6 @@
   .h-tab_container {
     padding: 40px;
     display: flex;
-    justify-content: center;
 }
   .h-tab_tab-head li {
     font-size: 16px;
@@ -33,7 +32,6 @@
     background-color: #f0f0f0;
   }
   .h-tab_tab-head li.active {
-    background-color: #1fae58;
     color: #fff;
     display: block;
   }
@@ -121,13 +119,12 @@
   }
   .add-to-cart-btn {
     display: inline-block;
-    background: #1fae58;
     color: #fff !important;
     padding: 12px 20px;
     text-decoration: none;
 }
 .add-to-cart-btn:hover,.add-to-cart-btn:visited,.add-to-cart-btn:active,.add-to-cart-btn:focus {
-  background: #109b47 !important;
+  
 }
 .vari-select {
   height: 53px;
@@ -139,4 +136,49 @@
 }
 .wpa-bottom-content {
   margin-top: 20px;
+}
+
+.h-tab_container .more-text {
+  display: none;
+}
+
+.show-content .more-text {
+  display: block;
+}
+
+.h-tab_container .read-more {
+  display: inline-block;
+  margin-top: 10px;
+}
+@media only screen and (max-width: 1000px) {
+  .v-tab_tab-head li::before{
+    display: none;
+  }
+}
+@media only screen and (max-width: 750px) {
+  .v-tab_tab-head li{
+    display: inline-block !important;
+    width: auto;
+  }
+  .v-tab_tab-head{
+    float: none;
+    width: 100%;
+    min-height: 0px;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .v-tab_container{
+    float: none;
+    width: 100%;
+  }
+  .v-tab{
+    flex-wrap: wrap;
+  }
+  .h-tab_tab-head{
+    flex-wrap: wrap;
+  }
+  .v-tab_tab-head li::before{
+    display: none;
+  }
 }
