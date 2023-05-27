@@ -35,7 +35,7 @@ jQuery(document).ready(function($) {
 
     $(".vari-select").change(function(){
         variationID = $(this).val();
-        hrefStr = $(".add-to-cart-btn").attr("href");
+        hrefStr = $(this).next(".add-to-cart-btn").attr("href");
 
         // Create a new URL object with the URL string
         const url = new URL(hrefStr);
@@ -52,7 +52,7 @@ jQuery(document).ready(function($) {
         // Get the modified URL string
         const modifiedUrlString = url.toString();
 
-        $(".add-to-cart-btn").attr("href",modifiedUrlString);
+        $(this).next(".add-to-cart-btn").attr("href",modifiedUrlString);
     });
 
     /* Read more text toggle */
